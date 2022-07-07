@@ -61,7 +61,7 @@ struct argv_t
             {
                 data[i] = '\0';
                 // +1 doesn't cause problems, because std::string will
-                // containt terminating null
+                // contain terminating null
                 ptrs.push_back(&data[i + 1]);
             }
         }
