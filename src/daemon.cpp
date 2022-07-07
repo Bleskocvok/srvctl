@@ -6,19 +6,22 @@
 #include "commands.hpp" // commands
 #include "common.hpp"   // message, app, to_str
 #include "proc.hpp"     // proc
+#include "fd.hpp"       // fd
 
 // deps
 #include "deps/json.hpp"
 
 // posix
-#include <unistd.h>     // daemon, write, read, close
+#include <fcntl.h>      // fcntl
+#include <unistd.h>     // fcntl, daemon, write, read, close
 #include <sys/socket.h> // bind, socket, connect, listen, accept
 #include <sys/types.h>  // bind, socket, connect, listen, accept
 #include <sys/un.h>     // sockaddr_un
+#include <errno.h>      // errno
 
 // c
 #include <cstdio>       // printf, perror
-#include <cstring>      // strncpy
+#include <cstring>      // strncpy, strerror
 
 // cpp
 #include <fstream>      // ifstream
@@ -93,11 +96,25 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    int client = -1;
+    fcntl(sock_fd, F_SETFL, O_NONBLOCK);
+
     message msg;
 
-    while ((client = accept4(sock_fd, nullptr, nullptr, SOCK_CLOEXEC)) >= 0)
+    while (true)
     {
+        static int i = 0;
+        printf("%d\n", i++);
+        int client = accept4(sock_fd, nullptr, nullptr, SOCK_CLOEXEC);
+        if (client == -1)
+        {
+            int err = errno;
+            if (err == EAGAIN || err == EWOULDBLOCK)
+                continue;
+
+            std::fprintf(stderr, "(srvd) ERROR: %s\n", std::strerror(err));
+            return 1;
+        }
+
         read(client, reinterpret_cast<char*>(&msg), msg.size());
 
         auto it = commands.find(msg.cmd);
@@ -110,9 +127,9 @@ int main(int argc, char** argv)
         else
         {
             std::cerr << "invalid cmd '"
-                      << msg.str_cmd()
-                      << "'"
-                      << std::endl;
+                        << msg.str_cmd()
+                        << "'"
+                        << std::endl;
         }
 
         close(client);

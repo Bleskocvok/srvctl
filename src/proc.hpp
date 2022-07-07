@@ -33,7 +33,7 @@ struct proc
 
         if (pid == 0)
         {
-            if (prctl(PR_SET_PDEATHSIG, SIGKILL) == -1)
+            if (::prctl(PR_SET_PDEATHSIG, SIGKILL) == -1)
                 std::perror("(srvd) ERROR");
 
             std::filesystem::current_path(cwd);

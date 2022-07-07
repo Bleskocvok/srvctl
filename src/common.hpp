@@ -55,6 +55,7 @@ struct argv_t
     argv_t(std::string str)
         : data(std::move(str))
     {
+        // TODO: reserve ‹data› to avoid reallocation
         for (size_t i = 0; i < data.size(); i++)
         {
             if (data[i] == ' ')
