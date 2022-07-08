@@ -2,13 +2,17 @@
 
 // kill
 #define _POSIX_C_SOURCE 200809L
+
+// posix
 #include <sys/wait.h>       // waitpid
 #include <sys/types.h>      // waitpid, fork
 #include <unistd.h>         //          fork, exec*
 #include <sys/prctl.h>      // prctl
 
+// c
 #include <cstdlib>          // exit
 
+// cpp
 #include <stdexcept>        // runtime_error
 #include <variant>          // variant
 #include <vector>           // vector
@@ -34,6 +38,7 @@ struct proc
         if (pid == 0)
         {
             if (::prctl(PR_SET_PDEATHSIG, SIGKILL) == -1)
+                // TODO: better log
                 std::perror("(srvd) ERROR");
 
             std::filesystem::current_path(cwd);

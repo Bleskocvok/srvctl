@@ -27,7 +27,9 @@ int main(int argc, char** argv)
         return std::fprintf(stderr, "usage: %s CMD [ARG]\n", argv[0]), 1;
 
     std::strncpy(msg.cmd, argv[1], sizeof(msg.cmd));
-    std::strncpy(msg.arg, argv[2], sizeof(msg.arg));
+
+    if (argc > 2)
+        std::strncpy(msg.arg, argv[2], sizeof(msg.arg));
 
     int sock_fd = socket(AF_UNIX, SOCK_STREAM, 0);
     if (sock_fd == -1)

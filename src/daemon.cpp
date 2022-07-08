@@ -18,6 +18,7 @@
 #include <sys/types.h>  // bind, socket, connect, listen, accept
 #include <sys/un.h>     // sockaddr_un
 #include <errno.h>      // errno
+#include <poll.h>       // poll
 
 // c
 #include <cstdio>       // printf, perror
@@ -96,14 +97,17 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    fcntl(sock_fd, F_SETFL, O_NONBLOCK);
+    struct pollfd fds = { sock_fd, POLLIN | POLLOUT, 0 };
 
     message msg;
 
+    fcntl(sock_fd, F_SETFL, O_NONBLOCK);
+
     while (true)
     {
-        static int i = 0;
-        printf("%d\n", i++);
+        if (poll(&fds, 1, 3000) == 0)
+            continue;
+
         int client = accept4(sock_fd, nullptr, nullptr, SOCK_CLOEXEC);
         if (client == -1)
         {
