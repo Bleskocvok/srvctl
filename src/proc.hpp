@@ -4,9 +4,10 @@
 #define _POSIX_C_SOURCE 200809L
 
 // posix
-#include <sys/wait.h>       // waitpid
-#include <sys/types.h>      // waitpid, fork
-#include <unistd.h>         //          fork, exec*
+#include <sys/wait.h>       // kill, waitpid
+#include <sys/types.h>      //       waitpid, fork
+#include <unistd.h>         //                fork, exec*
+#include <signal.h>         // kill
 #include <sys/prctl.h>      // prctl
 
 // c
