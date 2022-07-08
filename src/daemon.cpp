@@ -144,8 +144,8 @@ int main(int argc, char** argv)
 
     server.apps = parse(CONF_PATH);
 
-    int sock_fd = socket(AF_UNIX, SOCK_STREAM, 0);
-    if (sock_fd == -1)
+    fd_t sock = socket(AF_UNIX, SOCK_STREAM, 0);
+    if (!sock)
         return std::perror("(srvd) ERROR"), 1;
 
     struct sockaddr_un addr;
@@ -155,13 +155,13 @@ int main(int argc, char** argv)
 
     fs::remove(SOCK_PATH);
 
-    if (bind(sock_fd, (struct sockaddr*) &addr, sizeof(addr)) == -1)
+    if (bind(sock.fd, (struct sockaddr*) &addr, sizeof(addr)) == -1)
     {
         std::perror("(srvd) ERROR");
         return 1;
     }
 
-    if (listen(sock_fd, MAX_CLIENTS) == -1)
+    if (listen(sock.fd, MAX_CLIENTS) == -1)
     {
         std::perror("(srvd) ERROR");
         return 1;
@@ -170,7 +170,7 @@ int main(int argc, char** argv)
     // // TODO: perhaps:
     // prctl(PR_SET_CHILD_SUBREAPER, ...);
 
-    struct pollfd fds = { sock_fd, POLLIN | POLLOUT, 0 };
+    struct pollfd fds = { sock.fd, POLLIN | POLLOUT, 0 };
 
     struct timespec delay;
     delay.tv_sec = 3;
@@ -178,7 +178,7 @@ int main(int argc, char** argv)
 
     message msg;
 
-    fcntl(sock_fd, F_SETFL, O_NONBLOCK);
+    fcntl(sock.fd, F_SETFL, O_NONBLOCK);
 
     while (true)
     {
@@ -219,8 +219,8 @@ int main(int argc, char** argv)
             }
         }
 
-        int client = accept4(sock_fd, nullptr, nullptr, SOCK_CLOEXEC);
-        if (client == -1)
+        fd_t client = accept4(sock.fd, nullptr, nullptr, SOCK_CLOEXEC);
+        if (!client)
         {
             int err = errno;
             if (err == EAGAIN || err == EWOULDBLOCK)
@@ -230,14 +230,14 @@ int main(int argc, char** argv)
             return 1;
         }
 
-        read(client, reinterpret_cast<char*>(&msg), msg.size());
+        client.read(reinterpret_cast<char*>(&msg), msg.size());
 
         auto it = commands.find(msg.cmd);
         if (it != commands.end())
         {
             auto& cmd = it->second;
             auto resp = cmd.func(msg, server);
-            write(client, reinterpret_cast<char*>(&resp), resp.size());
+            client.write(reinterpret_cast<char*>(&resp), resp.size());
         }
         else
         {
@@ -246,11 +246,7 @@ int main(int argc, char** argv)
                         << "'"
                         << std::endl;
         }
-
-        close(client);
     }
-
-    close(sock_fd);
 
     return 0;
 }
