@@ -1,5 +1,6 @@
 
 #include "common.hpp"   // message
+#include "fd.hpp"       // fd_t
 
 #include <unistd.h>     // write, read, close
 #include <sys/socket.h> // bind, socket, connect, listen, accept
@@ -31,8 +32,8 @@ int main(int argc, char** argv)
     if (argc > 2)
         std::strncpy(msg.arg, argv[2], sizeof(msg.arg));
 
-    int sock_fd = socket(AF_UNIX, SOCK_STREAM, 0);
-    if (sock_fd == -1)
+    fd_t sock = socket(AF_UNIX, SOCK_STREAM, 0);
+    if (!sock)
     {
         std::perror("(srvctl) ERROR");
         return 1;
@@ -43,23 +44,21 @@ int main(int argc, char** argv)
     std::strncpy(addr.sun_path, SOCK_PATH_STR, std::min(sizeof(addr.sun_path),
                                                         sizeof(SOCK_PATH_STR)));
 
-    if (connect(sock_fd, (struct sockaddr*) &addr, sizeof(addr)) == -1)
+    if (connect(sock.fd, (struct sockaddr*) &addr, sizeof(addr)) == -1)
     {
         std::perror("(srvctl) ERROR");
         return 1;
     }
 
-    write(sock_fd, reinterpret_cast<char*>(&msg), msg.size());
+    sock.write(reinterpret_cast<char*>(&msg), msg.size());
 
-    read(sock_fd, reinterpret_cast<char*>(&msg), msg.size());
+    sock.read(reinterpret_cast<char*>(&msg), msg.size());
 
     std::cout << "response:\n"
               << "'" << msg.str_cmd() << "'"
               << "\n"
               << "'" << msg.str_arg() << "'"
               << std::endl;
-
-    close(sock_fd);
 
     return 0;
 }
