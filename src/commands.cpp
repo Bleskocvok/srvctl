@@ -24,10 +24,8 @@ message cmd_start(const message& msg, server_t& server)
 
     char* const* argv = it->second.start.ptrs.data();
     const auto& dir = it->second.dir;
-    if (!server.procs.emplace(msg.str_arg(), proc{ argv, dir }).second)
+    if (!server.procs.try_emplace(msg.str_arg(), argv, dir).second)
         return message{ "error", "already running" };
-
-    auto ret = server.procs.at(msg.str_arg()).wait();
 
     return message{ "success", "" };
 }
@@ -48,7 +46,7 @@ message cmd_stop(const message& msg, server_t& server)
 }
 
 
-message cmd_update(const message& msg, server_t&)
+message cmd_update(const message&, server_t&)
 {
     return {};
 }
