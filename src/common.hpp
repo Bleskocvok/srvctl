@@ -13,7 +13,7 @@
 #include <map>          // map
 #include <filesystem>   // fs::*
 #include <utility>      // move
-#include <algorithm>    // transform
+#include <algorithm>    // transform, count
 
 
 const auto CONF_PATH = std::filesystem::path{ ".srvctl.json" };
@@ -55,7 +55,8 @@ struct argv_t
     argv_t(std::string str)
         : data(std::move(str))
     {
-        // TODO: reserve ‹data› to avoid reallocation
+        data.reserve(1 + std::count(data.begin(), data.end(), ' '));
+
         for (size_t i = 0; i < data.size(); i++)
         {
             if (data[i] == ' ')

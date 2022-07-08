@@ -77,10 +77,12 @@ void handler(int sig,
     {
         case SIGCHLD: reactions.child_dead = 1; break;
 
+        // term
         case SIGTERM: [[fallthrough]];
         case SIGINT:  [[fallthrough]];
         case SIGALRM: reactions.terminate = 1; break;
 
+        // core
         case SIGABRT: [[fallthrough]];
         case SIGQUIT: reactions.terminate = 1; break;
 
