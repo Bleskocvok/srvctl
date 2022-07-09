@@ -12,6 +12,7 @@
 
 // c
 #include <cstring>      // strncpy
+#include <cstdio>       // snprintf
 
 // cpp
 #include <map>          // map
@@ -44,6 +45,13 @@ struct message
     std::vector<std::array<char, Block>> contents = {};
 
     message() = default;
+
+    template<typename ... Args>
+    message(const char* arg_, const char* fmt, Args&& ... args)
+    {
+        std::strncpy(arg, arg_, Block);
+        add_line(fmt, std::forward<Args>(args)...);
+    }
 
     message(const char* arg_, const char* nxt = nullptr)
     {
@@ -98,6 +106,14 @@ struct message
         }
 
         return {};
+    }
+
+    template<typename ... Args>
+    int add_line(const char* fmt, Args&& ... args)
+    {
+        contents.emplace_back(std::array<char, Block>{ 0 });
+        return std::snprintf(contents.back().data(), Block, fmt,
+                             std::forward<Args>(args)...);
     }
 };
 

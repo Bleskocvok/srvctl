@@ -14,7 +14,7 @@
 #include <iostream>     // cout
 #include <map>          // map
 #include <filesystem>   // fs::*
-#include <algorithm>    // min
+#include <string_view>  // string_view
 
 
 namespace fs = std::filesystem;
@@ -24,11 +24,6 @@ int main(int argc, char** argv)
 {
     if (argc <= 1)
         return std::fprintf(stderr, "usage: %s CMD [ARG]\n", argv[0]), 1;
-
-    // std::strncpy(msg.arg, argv[1], sizeof(msg.arg));
-
-    // if (argc > 2)
-    //     std::strncpy(msg.arg, argv[2], sizeof(msg.arg));
 
     auto msg = message{ argv[1], argc > 2 ? argv[2] : nullptr};
 
@@ -47,16 +42,14 @@ int main(int argc, char** argv)
 
     msg.recv(sock);
 
-    // sock.write(reinterpret_cast<char*>(&msg), msg.size());
-
-    // sock.read(reinterpret_cast<char*>(&msg), msg.size());
-
-    std::cout << "response: '" << msg.arg << "'\n";
-
+    std::cout << msg.arg << "\n";
     for (const auto& line : msg.contents)
-    {
         std::cout << line.data() << std::endl;
-    }
+
+    using namespace std::literals;
+
+    if (msg.arg == "error"sv)
+        return 1;
 
     return 0;
 }
