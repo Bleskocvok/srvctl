@@ -152,8 +152,7 @@ int main(int argc, char** argv)
 
     struct sockaddr_un addr;
     addr.sun_family = AF_UNIX;
-    std::strncpy(addr.sun_path, SOCK_PATH_STR, std::min(sizeof(addr.sun_path),
-                                                        sizeof(SOCK_PATH_STR)));
+    std::strncpy(addr.sun_path, SOCK_PATH.c_str(), sizeof(addr.sun_path));
 
     fs::remove(SOCK_PATH);
 

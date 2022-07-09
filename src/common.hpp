@@ -17,9 +17,7 @@
 
 
 const auto CONF_PATH = std::filesystem::path{ ".srvctl.json" };
-
-const char SOCK_PATH_STR[] = ".srvctl.sock";
-const auto SOCK_PATH = std::filesystem::path{ SOCK_PATH_STR };
+const auto SOCK_PATH = std::filesystem::path{ ".srvctl.sock" };
 
 constexpr int MAX_CLIENTS = 5;
 

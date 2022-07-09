@@ -24,8 +24,11 @@ message cmd_start(const message& msg, server_t& server)
 
     char* const* argv = it->second.start.ptrs.data();
     const auto& dir = it->second.dir;
-    if (!server.procs.try_emplace(msg.str_arg(), argv, dir).second)
+    const auto& [nit, succ] = server.procs.try_emplace(msg.str_arg(), argv, dir);
+    if (!succ)
         return message{ "error", "already running" };
+
+    std::printf("proc: %d\n", int(nit->second.pid));
 
     return message{ "success", "" };
 }
