@@ -4,7 +4,7 @@
 #define _POSIX_C_SOURCE 200809L
 
 // headers
-#include "proc.hpp"     // proc
+#include "proc.hpp"     // proc_t
 
 // posix
 #include <string.h>     // strnlen
@@ -82,6 +82,6 @@ struct app_t
 
 struct server_t
 {
-    std::map<std::string, proc> procs;
+    std::map<std::string, proc_t> procs;
     std::map<std::string, app_t> apps;
 };

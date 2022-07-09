@@ -25,11 +25,11 @@ struct exitted   { int ret; };
 struct signalled { int sig; };
 
 
-struct proc
+struct proc_t
 {
     pid_t pid = -1;
 
-    proc(char* const argv[], const std::filesystem::path& cwd)
+    proc_t(char* const argv[], const std::filesystem::path& cwd)
     {
         pid = ::fork();
 
@@ -51,26 +51,26 @@ struct proc
         }
     }
 
-    proc(const proc&) = delete;
-    proc& operator=(const proc&) = delete;
+    proc_t(const proc_t&) = delete;
+    proc_t& operator=(const proc_t&) = delete;
 
-    proc(proc&& other) noexcept
+    proc_t(proc_t&& other) noexcept
         : pid(std::exchange(other.pid, -1))
     { }
 
-    proc& operator=(proc&& other) noexcept
+    proc_t& operator=(proc_t&& other) noexcept
     {
         pid = std::exchange(other.pid, -1);
         return *this;
     }
 
-    ~proc()
+    ~proc_t()
     {
         if (pid == -1)
             return;
 
-        proc::signal(SIGKILL);
-        proc::wait();
+        proc_t::signal(SIGKILL);
+        proc_t::wait();
     }
 
     bool zombie() const
@@ -92,7 +92,7 @@ struct proc
     auto wait() -> std::variant<exitted, signalled>
     {
         if (pid == -1)
-            throw std::runtime_error("proc::wait");
+            throw std::runtime_error("proc_t::wait");
 
         int status{};
         pid_t r = ::waitpid(pid, &status, 0);
@@ -108,7 +108,7 @@ struct proc
         if (WIFSIGNALED(status))
             return signalled{ WTERMSIG(status) };
 
-        throw std::runtime_error("proc::wait: invalid state");
+        throw std::runtime_error("proc_t::wait: invalid state");
     }
 
     void signal(int sig)
