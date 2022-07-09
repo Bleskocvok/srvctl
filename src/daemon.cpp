@@ -1,7 +1,7 @@
 
 // daemon
 #define _DEFAULT_SOURCE
-// sigaction, siginfo_t
+// sigaction, siginfo_t, strsignal
 #define _POSIX_C_SOURCE 200809L
 // ppoll
 #ifndef _GNU_SOURCE
@@ -27,6 +27,7 @@
 #include <poll.h>       // ppoll
 #include <signal.h>     // ppoll, sig_atomic_t, sigaction, sigemptyset,
                         //        sigaddset, sigprocmask, sigsuspend, SIG*
+#include <string.h>     // strsignal
 
 // c
 #include <cstdio>       // printf, perror
@@ -45,9 +46,6 @@ using json = nlohmann::json;
 
 
 namespace fs = std::filesystem;
-
-
-static server_t server;
 
 
 struct reactions_t
@@ -144,6 +142,7 @@ int main(int argc, char** argv)
     if (sigprocmask(SIG_BLOCK, &mask_set, &mask_old) == -1)
         return std::perror("(srvd) ERROR"), 1;
 
+    server_t server;
     server.apps = parse(CONF_PATH);
 
     fd_t sock = socket(AF_UNIX, SOCK_STREAM, 0);
@@ -193,31 +192,21 @@ int main(int argc, char** argv)
         {
             reactions.child_dead = 0;
             std::printf("SIGCHLD\n");
-            // TODO: reap the zombies
-            for(auto it  = server.procs.begin();
-                     it != server.procs.end();)
+            server.reap_zombies([](const auto& info, const auto& it)
             {
-                auto& proc = it->second;
-                if (proc.zombie())
+                std::printf("waited '%s' ", it->first.c_str());
+                switch (info.index())
                 {
-                    auto ex = proc.wait();
-                    switch (ex.index())
-                    {
-                        case 0: std::printf("chld exit %d\n",
-                                            std::get<exitted>(ex).ret);
-                                break;
-                        case 1: std::printf("chld sig  %d\n",
-                                            std::get<signalled>(ex).sig);
-                                break;
-                    }
-                    std::printf("'%s' waited\n", it->first.c_str());
-                    it = server.procs.erase(it);
+                    case 0: {
+                        auto e = std::get<e_exit>(info);
+                        std::printf("(exit %d)\n", e.ret);
+                    } break;
+                    case 1: {
+                        auto s = std::get<e_sig>(info);
+                        std::printf("(sig  %d: %s)\n", s.sig, strsignal(s.sig));
+                    } break;
                 }
-                else
-                {
-                    ++it;
-                }
-            }
+            });
         }
 
         fd_t client = accept4(sock.fd, nullptr, nullptr, SOCK_CLOEXEC);

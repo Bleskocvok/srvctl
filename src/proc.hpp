@@ -21,8 +21,8 @@
 #include <utility>          // exchange
 
 
-struct exitted   { int ret; };
-struct signalled { int sig; };
+struct e_exit   { int ret; };
+struct e_sig { int sig; };
 
 
 struct proc_t
@@ -89,7 +89,7 @@ struct proc_t
         return info.si_pid != pid;
     }
 
-    auto wait() -> std::variant<exitted, signalled>
+    auto wait() -> std::variant<e_exit, e_sig>
     {
         if (pid == -1)
             throw std::runtime_error("proc_t::wait");
@@ -103,10 +103,10 @@ struct proc_t
         pid = -1;
 
         if (WIFEXITED(status))
-            return exitted{ WEXITSTATUS(status) };
+            return e_exit{ WEXITSTATUS(status) };
 
         if (WIFSIGNALED(status))
-            return signalled{ WTERMSIG(status) };
+            return e_sig{ WTERMSIG(status) };
 
         throw std::runtime_error("proc_t::wait: invalid state");
     }

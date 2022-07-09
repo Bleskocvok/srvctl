@@ -22,7 +22,7 @@ message cmd_start(const message& msg, server_t& server)
     if (it == server.apps.end())
         return message{ "error", "invalid app name" };
 
-    char* const* argv = it->second.start.ptrs.data();
+    char* const* argv = it->second.start.c_str();
     const auto& dir = it->second.dir;
     const auto& [nit, succ] = server.procs.try_emplace(msg.str_arg(), argv, dir);
     if (!succ)

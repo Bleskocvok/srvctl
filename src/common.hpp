@@ -50,6 +50,8 @@ struct argv_t
     std::string data;
     std::vector<char*> ptrs;
 
+    char* const* c_str() const { return ptrs.data(); }
+
     argv_t(std::string str)
         : data(std::move(str))
     {
@@ -58,11 +60,9 @@ struct argv_t
         for (size_t i = 0; i < data.size(); i++)
         {
             if (data[i] == ' ')
-            {
-                data[i] = '\0';
-                // +1 doesn't cause problems, because std::string will
-                // contain terminating null
-                ptrs.push_back(&data[i + 1]);
+            {                                   // +1 doesn't cause problems,
+                data[i] = '\0';                 // because std::string will
+                ptrs.push_back(&data[i + 1]);   // contain terminating null
             }
         }
         ptrs.push_back(nullptr);
@@ -82,4 +82,25 @@ struct server_t
 {
     std::map<std::string, proc_t> procs;
     std::map<std::string, app_t> apps;
+
+    void reap_zombies() { reap_zombies([](const auto&, const auto&){}); }
+
+    template<typename ForEachZombie>
+    void reap_zombies(ForEachZombie func)
+    {
+        for (auto it = procs.begin(); it != procs.end(); )
+        {
+            auto& proc = it->second;
+            if (proc.zombie())
+            {
+                auto ex = proc.wait();
+                func(ex, it);
+                it = procs.erase(it);
+            }
+            else
+            {
+                ++it;
+            }
+        }
+    }
 };
