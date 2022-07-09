@@ -21,8 +21,8 @@
 #include <utility>          // exchange
 
 
-struct e_exit   { int ret; };
-struct e_sig { int sig; };
+struct e_exit { int ret; };
+struct e_sig  { int sig; };
 
 
 struct proc_t

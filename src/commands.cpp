@@ -12,6 +12,7 @@ extern const std::map<std::string, command> commands =
     { "stop",   command{ cmd_stop,   "" } },
     { "update", command{ nullptr,    "" } },
     { "status", command{ nullptr,    "" } },
+    { "list",   command{ nullptr,    "" } },
 };
 
 

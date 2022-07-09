@@ -14,12 +14,14 @@
 #include <filesystem>   // fs::*
 #include <utility>      // move
 #include <algorithm>    // transform, count
+#include <optional>     // optional
+
+
+constexpr int MAX_CLIENTS = 5;
 
 
 const auto CONF_PATH = std::filesystem::path{ ".srvctl.json" };
 const auto SOCK_PATH = std::filesystem::path{ ".srvctl.sock" };
-
-constexpr int MAX_CLIENTS = 5;
 
 
 template<size_t Size>
@@ -52,19 +54,18 @@ struct argv_t
 
     char* const* c_str() const { return ptrs.data(); }
 
-    argv_t(std::string str)
-        : data(std::move(str))
+    argv_t(std::string str) : data(std::move(str))
     {
         data.reserve(1 + std::count(data.begin(), data.end(), ' '));
 
         for (size_t i = 0; i < data.size(); i++)
         {
             if (data[i] == ' ')
-            {                                   // +1 doesn't cause problems,
-                data[i] = '\0';                 // because std::string will
-                ptrs.push_back(&data[i + 1]);   // contain terminating null
-            }
-        }
+            {                                   
+                data[i] = '\0';
+                ptrs.push_back(&data[i + 1]);   // +1 doesn't cause problems,
+            }                                   // because std::string will
+        }                                       // contain terminating null
         ptrs.push_back(nullptr);
     }
 };
@@ -75,6 +76,7 @@ struct app_t
     std::filesystem::path dir;
     argv_t start;
     argv_t update;
+    std::optional<decltype(std::declval<proc_t>().wait())> exit{};
 };
 
 
@@ -95,6 +97,8 @@ struct server_t
             {
                 auto ex = proc.wait();
                 func(ex, it);
+                apps.at(it->first).exit = ex;
+
                 it = procs.erase(it);
             }
             else

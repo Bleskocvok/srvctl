@@ -34,20 +34,14 @@ int main(int argc, char** argv)
 
     fd_t sock = socket(AF_UNIX, SOCK_STREAM, 0);
     if (!sock)
-    {
-        std::perror("(srvctl) ERROR");
-        return 1;
-    }
+        return std::perror("(srvctl) ERROR"), 1;
 
     struct sockaddr_un addr;
     addr.sun_family = AF_UNIX;
     std::strncpy(addr.sun_path, SOCK_PATH.c_str(), sizeof(addr.sun_path));
 
     if (connect(sock.fd, (struct sockaddr*) &addr, sizeof(addr)) == -1)
-    {
-        std::perror("(srvctl) ERROR");
-        return 1;
-    }
+        return std::perror("(srvctl) ERROR"), 1;
 
     sock.write(reinterpret_cast<char*>(&msg), msg.size());
 
