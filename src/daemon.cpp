@@ -193,21 +193,6 @@ int main(int argc, char** argv)
             reactions.child_dead = 0;
             std::printf("SIGCHLD\n");
             server.reap_zombies();
-            // [](const auto& info, const auto& it)
-            // {
-            //     std::printf("waited '%s' ", it->first.c_str());
-            //     switch (info.index())
-            //     {
-            //         case 0: {
-            //             auto e = std::get<e_exit>(info);
-            //             std::printf("(exit %d)\n", e.ret);
-            //         } break;
-            //         case 1: {
-            //             auto s = std::get<e_sig>(info);
-            //             std::printf("(sig  %d: %s)\n", s.sig, strsignal(s.sig));
-            //         } break;
-            //     }
-            // };
         }
 
         fd_t client = accept4(sock.fd, nullptr, nullptr, SOCK_CLOEXEC);

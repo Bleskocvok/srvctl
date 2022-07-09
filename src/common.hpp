@@ -5,6 +5,7 @@
 
 // headers
 #include "proc.hpp"     // proc_t
+#include "fd.hpp"       // fd_t
 
 // posix
 #include <string.h>     // strnlen
@@ -34,6 +35,8 @@ std::string to_str(const char* str)
 template<size_t CmdSize, size_t ArgSize>
 struct message_t
 {
+    static constexpr size_t block = 256;
+
     static constexpr size_t size() { return CmdSize + ArgSize; }
 
     char cmd[CmdSize] = { 0 };
@@ -41,6 +44,33 @@ struct message_t
 
     auto str_cmd() const { return to_str<sizeof(cmd)>(cmd); }
     auto str_arg() const { return to_str<sizeof(arg)>(arg); }
+
+    auto ser(fd_t& out) -> std::optional<int>
+    {
+        return {};
+    }
+
+    auto deser(fd_t& in) -> std::optional<int>
+    {
+        char arg[64] = { 0 };
+        auto res = std::vector<char[block]>{};
+
+        char size = 0;
+        if (in.read(&size, 1) == -1)
+            return { errno };
+
+        if (in.read(&arg, sizeof(arg) - 1) == -1)
+            return { errno };
+
+        for (size_t i = 0; i < size; ++i)
+        {
+            res.push_back({ 0 });
+            if (in.read(&res.back(), block - 1) == -1)
+                return { errno };
+        }
+
+        return {};
+    }
 };
 
 

@@ -4,6 +4,7 @@
 message cmd_start (const message&, server_t&);
 message cmd_stop  (const message&, server_t&);
 message cmd_update(const message&, server_t&);
+message cmd_list  (const message&, server_t&);
 
 
 extern const std::map<std::string, command> commands =
@@ -52,5 +53,26 @@ message cmd_stop(const message& msg, server_t& server)
 
 message cmd_update(const message&, server_t&)
 {
+    return {};
+}
+
+
+message cmd_list  (const message&, server_t&)
+{
+    // [](const auto& info, const auto& it)
+    // {
+    //     std::printf("waited '%s' ", it->first.c_str());
+    //     switch (info.index())
+    //     {
+    //         case 0: {
+    //             auto e = std::get<e_exit>(info);
+    //             std::printf("(exit %d)\n", e.ret);
+    //         } break;
+    //         case 1: {
+    //             auto s = std::get<e_sig>(info);
+    //             std::printf("(sig  %d: %s)\n", s.sig, strsignal(s.sig));
+    //         } break;
+    //     }
+    // };
     return {};
 }
