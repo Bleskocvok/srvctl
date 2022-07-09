@@ -22,15 +22,15 @@ namespace fs = std::filesystem;
 
 int main(int argc, char** argv)
 {
-    message msg{};
-
     if (argc <= 1)
         return std::fprintf(stderr, "usage: %s CMD [ARG]\n", argv[0]), 1;
 
-    std::strncpy(msg.cmd, argv[1], sizeof(msg.cmd));
+    // std::strncpy(msg.arg, argv[1], sizeof(msg.arg));
 
-    if (argc > 2)
-        std::strncpy(msg.arg, argv[2], sizeof(msg.arg));
+    // if (argc > 2)
+    //     std::strncpy(msg.arg, argv[2], sizeof(msg.arg));
+
+    auto msg = message{ argv[1], argc > 2 ? argv[2] : nullptr};
 
     fd_t sock = socket(AF_UNIX, SOCK_STREAM, 0);
     if (!sock)
@@ -43,15 +43,20 @@ int main(int argc, char** argv)
     if (connect(sock.fd, (struct sockaddr*) &addr, sizeof(addr)) == -1)
         return std::perror("(srvctl) ERROR"), 1;
 
-    sock.write(reinterpret_cast<char*>(&msg), msg.size());
+    msg.send(sock);
 
-    sock.read(reinterpret_cast<char*>(&msg), msg.size());
+    msg.recv(sock);
 
-    std::cout << "response:\n"
-              << "'" << msg.str_cmd() << "'"
-              << "\n"
-              << "'" << msg.str_arg() << "'"
-              << std::endl;
+    // sock.write(reinterpret_cast<char*>(&msg), msg.size());
+
+    // sock.read(reinterpret_cast<char*>(&msg), msg.size());
+
+    std::cout << "response: '" << msg.arg << "'\n";
+
+    for (const auto& line : msg.contents)
+    {
+        std::cout << line.data() << std::endl;
+    }
 
     return 0;
 }

@@ -10,12 +10,16 @@
 // posix
 #include <string.h>     // strnlen
 
+// c
+#include <cstring>      // strncpy
+
 // cpp
 #include <map>          // map
 #include <filesystem>   // fs::*
 #include <utility>      // move
 #include <algorithm>    // transform, count
 #include <optional>     // optional
+#include <array>        // array
 
 
 constexpr int MAX_CLIENTS = 5;
@@ -32,49 +36,70 @@ std::string to_str(const char* str)
 }
 
 
-template<size_t CmdSize, size_t ArgSize>
-struct message_t
+struct message
 {
-    static constexpr size_t block = 256;
+    static constexpr size_t Block = 256;
 
-    static constexpr size_t size() { return CmdSize + ArgSize; }
+    char arg[Block] = { 0 };
+    std::vector<std::array<char, Block>> contents = {};
 
-    char cmd[CmdSize] = { 0 };
-    char arg[ArgSize] = { 0 };
+    message() = default;
 
-    auto str_cmd() const { return to_str<sizeof(cmd)>(cmd); }
-    auto str_arg() const { return to_str<sizeof(arg)>(arg); }
-
-    auto ser(fd_t& out) -> std::optional<int>
+    message(const char* arg_, const char* nxt = nullptr)
     {
-        return {};
+        std::strncpy(arg, arg_, Block);
+        if (nxt)
+        {
+            contents.emplace_back(std::array<char, Block>{ 0 });
+            std::strncpy(line(0), nxt, Block);
+        }
     }
 
-    auto deser(fd_t& in) -> std::optional<int>
-    {
-        char arg[64] = { 0 };
-        auto res = std::vector<char[block]>{};
+    const char* line(size_t i) const { return contents[i].data(); }
+          char* line(size_t i)       { return contents[i].data(); }
 
-        char size = 0;
-        if (in.read(&size, 1) == -1)
+    auto send(fd_t& out) -> std::optional<int>
+    {
+        unsigned char size = contents.size();
+        if (out.write(reinterpret_cast<char*>(&size), 1) == -1)
             return { errno };
 
-        if (in.read(&arg, sizeof(arg) - 1) == -1)
+        if (out.write(reinterpret_cast<char*>(&arg), sizeof(arg) - 1) == -1)
             return { errno };
 
         for (size_t i = 0; i < size; ++i)
         {
-            res.push_back({ 0 });
-            if (in.read(&res.back(), block - 1) == -1)
+            if (out.write(line(i), Block - 1) == -1)
+                return { errno };
+        }
+
+        return {};
+    }
+
+    auto recv(fd_t& in) -> std::optional<int>
+    {
+        contents.clear();
+
+        unsigned char size = 0;
+        if (in.read(reinterpret_cast<char*>(&size), 1) == -1)
+            return { errno };
+
+        auto r = in.read(reinterpret_cast<char*>(&arg), sizeof(arg) - 1);
+        if (r == -1)
+            return { errno };
+
+        arg[r] = '\0';
+
+        for (size_t i = 0; i < size; ++i)
+        {
+            contents.emplace_back(std::array<char, Block>{ 0 });
+            if (in.read(contents.back().data(), Block - 1) == -1)
                 return { errno };
         }
 
         return {};
     }
 };
-
-
-using message = message_t<64, 1024>;
 
 
 struct argv_t

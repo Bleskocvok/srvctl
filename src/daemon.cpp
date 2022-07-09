@@ -206,21 +206,23 @@ int main(int argc, char** argv)
             return 1;
         }
 
-        client.read(reinterpret_cast<char*>(&msg), msg.size());
+        // client.read(reinterpret_cast<char*>(&msg), msg.size());
+        msg.recv(client);
 
-        auto it = commands.find(msg.cmd);
+        auto it = commands.find(msg.arg);
         if (it != commands.end())
         {
             auto& cmd = it->second;
             auto resp = cmd.func(msg, server);
-            client.write(reinterpret_cast<char*>(&resp), resp.size());
+            // client.write(reinterpret_cast<char*>(&resp), resp.size());
+            resp.send(client);
         }
         else
         {
-            std::cerr << "invalid cmd '"
-                      << msg.str_cmd()
-                      << "'"
-                      << std::endl;
+            auto resp = message{ "invalid cmd", msg.arg };
+            resp.send(client);
+
+            std::cerr << "invalid cmd '" << msg.arg << "'" << std::endl;
         }
     }
 

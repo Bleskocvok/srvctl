@@ -19,14 +19,15 @@ extern const std::map<std::string, command> commands =
 
 message cmd_start(const message& msg, server_t& server)
 {
-    auto it = server.apps.find(msg.str_arg());
+    const auto& arg = msg.line(0);
+    auto it = server.apps.find(arg);
 
     if (it == server.apps.end())
         return message{ "error", "invalid app name" };
 
     char* const* argv = it->second.start.c_str();
     const auto& dir = it->second.dir;
-    const auto& [nit, succ] = server.procs.try_emplace(msg.str_arg(), argv, dir);
+    const auto& [nit, succ] = server.procs.try_emplace(arg, argv, dir);
     if (!succ)
         return message{ "error", "already running" };
 
@@ -38,7 +39,9 @@ message cmd_start(const message& msg, server_t& server)
 
 message cmd_stop(const message& msg, server_t& server)
 {
-    auto it = server.procs.find(msg.str_arg());
+    const auto& arg = msg.line(0);
+
+    auto it = server.procs.find(arg);
     if (it == server.procs.end())
         return message{ "error", "not running" };
 
