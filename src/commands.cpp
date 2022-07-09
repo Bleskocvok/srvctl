@@ -85,7 +85,8 @@ message cmd_list  (const message&, server_t& server)
             } break;
             case 1: {
                 auto s = std::get<e_sig>(*info);
-                return "(sig  " + std::to_string(s.sig) + ": " + strsignal(s.sig) + ")";
+                return "(sig  " + std::to_string(s.sig)
+                        + ": " + strsignal(s.sig) + ")";
             } break;
         }
         return {};
@@ -93,19 +94,21 @@ message cmd_list  (const message&, server_t& server)
 
     auto resp = message{ "ok" };
 
-    resp.add_line("%-20s ┃ %20s ┃ %20s", "APP", "PID", "EXIT");
+    resp.add_line("%-20s │ %10s │ %20s", "APP", "PID", "EXIT");
+    resp.add_line("%-20s─┼─%10s─┼─%20s", "────────────────────", "──────────",
+                                         "────────────────────");
     for (const auto& [key, app] : server.apps)
     {
         auto it = server.procs.find(key);
         if (it != server.procs.end())
         {
-            resp.add_line("%-20s ┃ %20d ┃ %20s",
+            resp.add_line("%-20s │ %10d │ %20s",
                           key.c_str(), it->second.pid,
                           str_exit(app.exit).c_str());
         }
         else
         {
-            resp.add_line("%-20s ┃ %20s ┃ %20s",
+            resp.add_line("%-20s │ %10s │ %20s",
                           key.c_str(), "-",
                           str_exit(app.exit).c_str());
         }
