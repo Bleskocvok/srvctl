@@ -1,10 +1,11 @@
 #pragma once
 
-
-#include "common.hpp"   // app_t, message_t, server_t
+// headers
+#include "message.hpp"  // message
+#include "common.hpp"   // app_t, server_t
 #include "proc.hpp"     // proc
 
-
+// cpp
 #include <map>          // map
 
 

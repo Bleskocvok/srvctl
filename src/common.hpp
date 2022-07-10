@@ -9,8 +9,12 @@
 
 // posix
 #include <string.h>     // strnlen
+#include <unistd.h>     // getuid
+#include <sys/types.h>  // getuid, getpwuid
+#include <pwd.h>        //         getpwuid
 
 // c
+#include <cstdio>       // printf
 #include <cstring>      // strncpy, strncat
 
 // cpp
@@ -19,13 +23,38 @@
 #include <utility>      // move
 #include <algorithm>    // count
 #include <optional>     // optional
+#include <stdexcept>    // runtime_error
 
 
 constexpr int MAX_CLIENTS = 5;
 
 
-const auto CONF_PATH = std::filesystem::path{ ".srvctl.json" };
-const auto SOCK_PATH = std::filesystem::path{ ".srvctl.sock" };
+inline const auto CONF = std::filesystem::path{ ".apps.json" };
+inline const auto SOCK = std::filesystem::path{ ".socket" };
+
+inline auto CONF_PATH = std::filesystem::path{};
+inline auto SOCK_PATH = std::filesystem::path{};
+
+
+inline void setup_paths(bool log = false)
+{
+    namespace fs = std::filesystem;
+
+    struct passwd* pw = getpwuid(getuid());
+    if (!pw)
+        throw std::runtime_error("cannot obtain HOME");
+
+    auto home = fs::path{ pw->pw_dir };
+    CONF_PATH = home / ".srvctl" / CONF;
+    SOCK_PATH = home / ".srvctl" / SOCK;
+
+    if (!fs::is_regular_file(CONF_PATH))
+        throw std::runtime_error("'" + CONF_PATH.string()
+                                 += "' doesn't exist or isn't a regular file");
+
+    if (log)
+        std::fprintf(stderr, "CONF_PATH: %s\n", CONF_PATH.c_str());
+}
 
 
 struct argv_t

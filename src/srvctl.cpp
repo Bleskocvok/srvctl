@@ -34,6 +34,8 @@ void log_err(int err)
 
 int main(int argc, char** argv)
 {
+    setup_paths();
+
     if (argc <= 1)
         return std::fprintf(stderr, "usage: %s CMD [ARG]\n", argv[0]), 1;
 

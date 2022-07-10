@@ -30,17 +30,18 @@
 #include <string.h>     // strsignal
 
 // c
-#include <cstdio>       // printf, perror
+#include <cstdio>       // printf
 #include <cstring>      // strncpy, strerror, memset
 #include <cerrno>       // errno
 
 // cpp
 #include <fstream>      // ifstream
-#include <iostream>     // cout
+#include <iostream>     // cerr
 #include <map>          // map
 #include <filesystem>   // fs::*
 #include <algorithm>    // min
 #include <array>        // array
+#include <utility>      // forward
 
 
 using json = nlohmann::json;
@@ -128,6 +129,7 @@ int main(int argc, char** argv)
     //     std::perror("(srvctl deamon) ERROR");
     //     return 1;
     // }
+    setup_paths(true);
 
     // deamon now
 
