@@ -32,7 +32,7 @@ void log_err(int err)
 }
 
 
-int main(int argc, char** argv)
+int run(int argc, char** argv)
 {
     setup_paths();
 
@@ -68,5 +68,19 @@ int main(int argc, char** argv)
         return 1;
 
     return 0;
+}
+
+
+int main(int argc, char** argv)
+{
+    try
+    {
+        return run(argc, argv);
+    }
+    catch(const std::exception& e)
+    {
+        std::fprintf(stderr, "ERROR: %s\n", e.what());
+        return 1;
+    }
 }
 
