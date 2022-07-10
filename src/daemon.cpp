@@ -41,7 +41,8 @@
 #include <filesystem>   // fs::*
 #include <algorithm>    // min
 #include <array>        // array
-#include <utility>      // forward
+#include <utility>      // forward, declval
+#include <type_traits>  // is_same_v, decay_t
 
 
 using json = nlohmann::json;
@@ -125,9 +126,23 @@ std::map<std::string, app_t> parse(const fs::path& path)
 template<typename Arg, typename ... Args>
 void log_err_rec(Arg&& arg, Args&& ... args)
 {
-    std::cerr << arg;
+    using T = std::decay_t<Arg>;
+    if constexpr (std::is_same_v<char,
+                                 std::decay_t<decltype(std::declval<T>()[0])>>)
+    {
+        std::fprintf(stderr, "%s", arg);
+    }
+    else if constexpr (std::is_same_v<std::string, T>)
+    {
+        std::fprintf(stderr, "%s", arg.c_str());
+    }
+    else
+    {
+        using D = typename std::decay<decltype(std::declval<T>()[0])>::type;
+        std::declval<D>().get_type_bla_bla();
+    }
 
-    if conxtexpr (sizeof...(Args) != 0)
+    if constexpr (sizeof...(Args) != 0)
         log_err_rec(std::forward<Args>(args)...);
 }
 
@@ -135,13 +150,13 @@ void log_err_rec(Arg&& arg, Args&& ... args)
 template<typename ... Args>
 void log_err(Args&& ... args)
 {
-    std::cerr << "(srvd) ERROR: ";
+    log_err_rec("(srvd) ERROR: ");
     log_err_rec(std::forward<Args>(args)...);
-    std::cerr << "\n";
+    log_err_rec("\n");
 }
 
 
-void log_errno(int val) { log_err(std::strerror(err)); }
+void log_errno(int err) { log_err(std::strerror(err)); }
 
 
 int run(int argc, char** argv)
