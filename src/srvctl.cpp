@@ -1,6 +1,7 @@
 
 // headers
-#include "common.hpp"   // message
+#include "message.hpp"  // message
+#include "common.hpp"   // *_PATH
 #include "fd.hpp"       // fd_t
 
 // posix
@@ -8,11 +9,11 @@
 #include <sys/socket.h> // bind, socket, connect, listen, accept
 #include <sys/types.h>  // bind, socket, connect, listen, accept
 #include <sys/un.h>     // sockaddr_un
-#include <errno.h>      // errno
 
 // c
 #include <cstdio>       // printf, perror
 #include <cstring>      // strncpy, strerror
+#include <cerrno>       // errno
 
 // cpp
 #include <fstream>      // ifstream

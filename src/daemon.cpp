@@ -10,7 +10,8 @@
 
 // headers
 #include "commands.hpp" // commands
-#include "common.hpp"   // message, app, to_str
+#include "message.hpp"  // message
+#include "common.hpp"   // app, to_str
 #include "proc.hpp"     // proc
 #include "fd.hpp"       // fd
 
@@ -23,7 +24,6 @@
 #include <sys/socket.h> // bind, socket, connect, listen, accept
 #include <sys/types.h>  // bind, socket, connect, listen, accept
 #include <sys/un.h>     // sockaddr_un
-#include <errno.h>      // errno
 #include <poll.h>       // ppoll
 #include <signal.h>     // ppoll, sig_atomic_t, sigaction, sigemptyset,
                         //        sigaddset, sigprocmask, sigsuspend, SIG*
@@ -32,6 +32,7 @@
 // c
 #include <cstdio>       // printf, perror
 #include <cstring>      // strncpy, strerror, memset
+#include <cerrno>       // errno
 
 // cpp
 #include <fstream>      // ifstream
