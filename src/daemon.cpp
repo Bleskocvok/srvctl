@@ -202,7 +202,7 @@ int main(int argc, char** argv)
                 continue;
 
             std::fprintf(stderr, "(srvd) ERROR: %s\n", std::strerror(err));
-            return 1;
+            continue;  // do not exit in case a client connection fails
         }
 
         msg.recv(client);

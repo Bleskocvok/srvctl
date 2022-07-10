@@ -1,15 +1,20 @@
 
+// headers
 #include "common.hpp"   // message
 #include "fd.hpp"       // fd_t
 
+// posix
 #include <unistd.h>     // write, read, close
 #include <sys/socket.h> // bind, socket, connect, listen, accept
 #include <sys/types.h>  // bind, socket, connect, listen, accept
 #include <sys/un.h>     // sockaddr_un
+#include <errno.h>      // errno
 
+// c
 #include <cstdio>       // printf, perror
-#include <cstring>      // strncpy
+#include <cstring>      // strncpy, strerror
 
+// cpp
 #include <fstream>      // ifstream
 #include <iostream>     // cout
 #include <map>          // map
@@ -18,6 +23,12 @@
 
 
 namespace fs = std::filesystem;
+
+
+void log_err(int err)
+{
+    std::fprintf(stderr, "(srvctl) ERROR: %s\n", std::strerror(err));
+}
 
 
 int main(int argc, char** argv)
@@ -29,18 +40,20 @@ int main(int argc, char** argv)
 
     fd_t sock = socket(AF_UNIX, SOCK_STREAM, 0);
     if (!sock)
-        return std::perror("(srvctl) ERROR"), 1;
+        return log_err(errno), 1;
 
     struct sockaddr_un addr;
     addr.sun_family = AF_UNIX;
     std::strncpy(addr.sun_path, SOCK_PATH.c_str(), sizeof(addr.sun_path));
 
     if (connect(sock.fd, (struct sockaddr*) &addr, sizeof(addr)) == -1)
-        return std::perror("(srvctl) ERROR"), 1;
+        return log_err(errno), 1;
 
-    msg.send(sock);
+    if (auto err = msg.send(sock))
+        return log_err(*err), 1;
 
-    msg.recv(sock);
+    if (auto err = msg.recv(sock))
+        return log_err(*err), 1;
 
     std::cout << "[" << msg.arg << "]\n";
     for (const auto& line : msg.contents)
