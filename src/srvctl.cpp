@@ -42,7 +42,7 @@ int main(int argc, char** argv)
 
     msg.recv(sock);
 
-    std::cout << msg.arg << "\n";
+    std::cout << "[" << msg.arg << "]\n";
     for (const auto& line : msg.contents)
         std::cout << line.data() << std::endl;
 

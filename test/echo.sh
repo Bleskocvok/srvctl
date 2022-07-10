@@ -2,6 +2,6 @@
 
 pwd
 cat .srvctl.json
-sleep 2
+sleep 4
 
 echo "(echo) exitting"

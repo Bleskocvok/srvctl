@@ -191,7 +191,6 @@ int main(int argc, char** argv)
         if (reactions.child_dead == 1)
         {
             reactions.child_dead = 0;
-            std::printf("SIGCHLD\n");
             server.reap_zombies();
         }
 
@@ -206,7 +205,6 @@ int main(int argc, char** argv)
             return 1;
         }
 
-        // client.read(reinterpret_cast<char*>(&msg), msg.size());
         msg.recv(client);
 
         auto it = commands.find(msg.arg);
@@ -214,7 +212,6 @@ int main(int argc, char** argv)
         {
             auto& cmd = it->second;
             auto resp = cmd.func(msg, server);
-            // client.write(reinterpret_cast<char*>(&resp), resp.size());
             resp.send(client);
         }
         else

@@ -2,6 +2,7 @@
 
 // cpp
 #include <string>       // string
+#include <variant>      // get_if
 
 
 message cmd_start (const message&, server_t&);
@@ -29,13 +30,11 @@ message cmd_start(const message& msg, server_t& server)
     if (it == server.apps.end())
         return message{ "error", "invalid app name '%s'", arg };
 
-    char* const* argv = it->second.start.c_str();
+    char* const* argv = it->second.start.get();
     const auto& dir = it->second.dir;
     const auto& [nit, succ] = server.procs.try_emplace(arg, argv, dir);
     if (!succ)
         return message{ "error", "already running" };
-
-    std::printf("proc: %d\n", int(nit->second.pid));
 
     return message{ "ok", "pid: %d", int(nit->second.pid) };
 }
@@ -51,16 +50,45 @@ message cmd_stop(const message& msg, server_t& server)
 
     // TODO: first attempt to terminate peacefully
     it->second.signal(SIGKILL);
-    it->second.wait();
-    server.procs.erase(it);
+    server.reap(it);
 
     return message{ "ok", "killed" };
 }
 
 
-message cmd_update(const message&, server_t&)
+message cmd_update(const message& msg, server_t& server)
 {
-    return {};
+    const auto& arg = msg.line(0);
+
+    auto app_it = server.apps.find(arg);
+    if (app_it == server.apps.end())
+        return message{ "error", "invalid app name '%s'", arg };
+
+    auto resp = message{};
+
+    auto proc_it = server.procs.find(arg);
+    if (proc_it != server.procs.end())
+    {
+        // TODO: first attempt to terminate peacefully
+        proc_it->second.signal(SIGKILL);
+        server.reap(proc_it);
+        resp.add_line("killed");
+    }
+
+    // TODO: interrupt if client dies when updating
+    // TODO: pipe update output and send to client
+    auto update = proc_t{ app_it->second.update.get(),
+                          app_it->second.dir };
+    auto ex = update.wait();
+
+    bool ok = false;
+    if (const auto* e = std::get_if<e_exit>(&ex))
+        ok = (e->ret == 0) || (resp.add_line("exit: %d", e->ret), false);
+    else if (const auto* s = std::get_if<e_sig>(&ex))
+        resp.add_line("signal: %d", s->sig);
+
+    resp.set_arg(ok ? "ok" : "error");
+    return resp;
 }
 
 
@@ -72,22 +100,19 @@ message cmd_status(const message&, server_t&)
 
 message cmd_list  (const message&, server_t& server)
 {
-    auto str_exit = [](const auto& info) -> std::string
+    auto str_exit = [](const auto& ex) -> std::string
     {
-        if (!info)
+        if (!ex)
             return "-";
 
-        switch (info->index())
+        if (const auto* e = std::get_if<e_exit>(&*ex))
         {
-            case 0: {
-                auto e = std::get<e_exit>(*info);
-                return "(exit " + std::to_string(e.ret) + ")";
-            } break;
-            case 1: {
-                auto s = std::get<e_sig>(*info);
-                return "(sig  " + std::to_string(s.sig)
-                        + ": " + strsignal(s.sig) + ")";
-            } break;
+            return "(exit " + std::to_string(e->ret) + ")";
+        }
+        else if (const auto* s = std::get_if<e_sig>(&*ex))
+        {
+            return "(sig " + std::to_string(s->sig) + ": "
+                   + ::strsignal(s->sig) + ")";
         }
         return {};
     };
@@ -102,15 +127,13 @@ message cmd_list  (const message&, server_t& server)
         auto it = server.procs.find(key);
         if (it != server.procs.end())
         {
-            resp.add_line("%-20s │ %10d │ %20s",
-                          key.c_str(), it->second.pid,
-                          str_exit(app.exit).c_str());
+            resp.add_line("%-20s │ %10d │ %20s", key.c_str(), it->second.pid,
+                                                 str_exit(app.exit).c_str());
         }
         else
         {
-            resp.add_line("%-20s │ %10s │ %20s",
-                          key.c_str(), "-",
-                          str_exit(app.exit).c_str());
+            resp.add_line("%-20s │ %10s │ %20s", key.c_str(), "-",
+                                                 str_exit(app.exit).c_str());
         }
     }
     return resp;

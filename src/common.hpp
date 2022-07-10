@@ -11,7 +11,7 @@
 #include <string.h>     // strnlen
 
 // c
-#include <cstring>      // strncpy
+#include <cstring>      // strncpy, strncat
 #include <cstdio>       // snprintf
 
 // cpp
@@ -49,19 +49,21 @@ struct message
     template<typename ... Args>
     message(const char* arg_, const char* fmt, Args&& ... args)
     {
-        std::strncpy(arg, arg_, Block);
+        set_arg(arg_);
         add_line(fmt, std::forward<Args>(args)...);
     }
 
     message(const char* arg_, const char* nxt = nullptr)
     {
-        std::strncpy(arg, arg_, Block);
+        set_arg(arg_);
         if (nxt)
         {
             contents.emplace_back(std::array<char, Block>{ 0 });
             std::strncpy(line(0), nxt, Block);
         }
     }
+
+    void set_arg(const char* arg_) { std::strncpy(arg, arg_, Block); }
 
     const char* line(size_t i) const { return contents[i].data(); }
           char* line(size_t i)       { return contents[i].data(); }
@@ -115,6 +117,14 @@ struct message
         return std::snprintf(contents.back().data(), Block, fmt,
                              std::forward<Args>(args)...);
     }
+
+    int add_line(const char* str)
+    {
+        contents.emplace_back(std::array<char, Block>{ 0 });
+        std::strncat(contents.back().data(), str, Block);
+        // TODO: use strnlen
+        return Block;
+    }
 };
 
 
@@ -123,7 +133,7 @@ struct argv_t
     std::string data;
     std::vector<char*> ptrs;
 
-    char* const* c_str() const { return ptrs.data(); }
+    char* const* get() const { return ptrs.data(); }
 
     argv_t(std::string str) : data(std::move(str))
     {
@@ -156,26 +166,23 @@ struct server_t
     std::map<std::string, proc_t> procs;
     std::map<std::string, app_t> apps;
 
-    void reap_zombies() { reap_zombies([](const auto&, const auto&){}); }
+    auto reap(decltype(procs)::iterator it)
+    {
+        auto& proc = it->second;
+        auto ex = proc.wait();
+        apps.at(it->first).exit = ex;
+        return procs.erase(it);
+    }
 
-    template<typename ForEachZombie>
-    void reap_zombies(ForEachZombie func)
+    void reap_zombies()
     {
         for (auto it = procs.begin(); it != procs.end(); )
         {
             auto& proc = it->second;
             if (proc.zombie())
-            {
-                auto ex = proc.wait();
-                func(ex, it);
-                apps.at(it->first).exit = ex;
-
-                it = procs.erase(it);
-            }
+                it = reap(it);
             else
-            {
                 ++it;
-            }
         }
     }
 };
