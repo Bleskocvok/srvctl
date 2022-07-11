@@ -130,6 +130,7 @@ void log_err_rec(Arg&& arg, Args&& ... args)
     if constexpr (std::is_same_v<char,
                                  std::decay_t<decltype(std::declval<T>()[0])>>)
     {
+        // TODO: add option to use syslog instead
         std::fprintf(stderr, "%s", arg);
     }
     else if constexpr (std::is_same_v<std::string, T>)
@@ -250,8 +251,8 @@ int run(int argc, char** argv)
 
         msg.recv(client);
 
-        auto it = commands.find(msg.arg);
-        if (it != commands.end())
+        auto it = COMMANDS.find(msg.arg);
+        if (it != COMMANDS.end())
         {
             auto& cmd = it->second;
             auto resp = cmd.func(msg, server);

@@ -1,5 +1,6 @@
 
 // headers
+#include "commands.hpp" // COMMANDS, print_help
 #include "message.hpp"  // message
 #include "common.hpp"   // *_PATH
 #include "fd.hpp"       // fd_t
@@ -20,7 +21,7 @@
 #include <iostream>     // cout
 #include <map>          // map
 #include <filesystem>   // fs::*
-#include <string_view>  // string_view
+#include <string_view>  // ""sv
 
 
 namespace fs = std::filesystem;
@@ -36,8 +37,21 @@ int run(int argc, char** argv)
 {
     setup_paths();
 
+    using namespace std::literals;
+
     if (argc <= 1)
-        return std::fprintf(stderr, "usage: %s CMD [ARG]\n", argv[0]), 1;
+        return std::fprintf(stderr, "Usage: %s CMD [ARG]\n", argv[0]), 1;
+
+    if (argv[1] == "--help"sv || argv[1] == "help"sv)
+        return print_help(argv[0]), 0;
+
+    if (COMMANDS.count(argv[1]) == 0)
+    {
+        std::fprintf(stderr, "Usage: %s CMD [ARG]\n"
+                             "\n"
+                             "Try: %s help\n", argv[0], argv[0]);
+        return 1;
+    }
 
     auto msg = message{ argv[1], argc > 2 ? argv[2] : nullptr};
 

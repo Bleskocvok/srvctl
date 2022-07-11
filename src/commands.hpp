@@ -7,6 +7,7 @@
 
 // cpp
 #include <map>          // map
+#include <vector>       // vector
 
 
 using cmd_ptr = message (*) (const message&, server_t&);
@@ -15,8 +16,13 @@ using cmd_ptr = message (*) (const message&, server_t&);
 struct command
 {
     cmd_ptr func;
-    std::string desc;
+    std::vector<std::string> usage;
+    std::vector<std::string> desc;
 };
 
 
-extern const std::map<std::string, command> commands;
+extern const std::map<std::string, command> COMMANDS;
+
+
+void print_help(const char* program);
+

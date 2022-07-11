@@ -8,18 +8,54 @@
 message cmd_start (const message&, server_t&);
 message cmd_stop  (const message&, server_t&);
 message cmd_update(const message&, server_t&);
-message cmd_status(const message&, server_t&);
 message cmd_list  (const message&, server_t&);
+message cmd_status(const message&, server_t&);
 
 
-extern const std::map<std::string, command> commands =
+extern const std::map<std::string, command> COMMANDS =
 {
-    { "start",  command{ cmd_start,  "" } },
-    { "stop",   command{ cmd_stop,   "" } },
-    { "update", command{ cmd_update, "" } },
-    { "status", command{ cmd_status, "" } },
-    { "list",   command{ cmd_list,   "" } },
+    { "start",  command{ cmd_start,
+                         { "APP" },
+                         { "Start app by given name.",
+                           "This app name must be present in ",
+                           "the respective configuration file." } } },
+    { "stop",   command{ cmd_stop,
+                         { "APP" },
+                         { "Stop a running instance of app of the given name.",
+                           "It must be running.",
+                           "The app is stopped by sending SIGKILL." } } },
+    { "update", command{ cmd_update,
+                         { "APP" },
+                         { "Update a given app. If the app is currently running,",
+                           "it is first stopped as if by command ‹stop›." } } },
+    { "list",   command{ cmd_list,
+                         {},
+                         { "List each apps loaded from the confifuration file",
+                           "If an instance is running, PID is listed.",
+                           "If the app had been stopped, information about",
+                           "signal/return is listed." } } },
+    // { "status", command{ cmd_status, {}, {} } },
+    // { "signal", command{ cmd_status, {}, {} } },
 };
+
+
+void print_help(const char* program)
+{
+    std::printf("Usage: %s CMD [ARG]\n\n", program);
+    std::printf("COMMANDS\n\n");
+    for (const auto& [key, cmd] : COMMANDS)
+    {
+        std::printf("%s %s ", program, key.c_str());
+
+        for (const auto& arg : cmd.usage)
+            std::printf("‹%s› ", arg.c_str());
+        std::printf("\n");
+
+        for (const auto& line : cmd.desc)
+            std::printf("    %s\n", line.c_str());
+        std::printf("\n");
+    }
+}
 
 
 message cmd_start(const message& msg, server_t& server)
