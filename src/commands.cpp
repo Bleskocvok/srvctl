@@ -34,8 +34,11 @@ extern const std::map<std::string, command> COMMANDS =
                            "If an instance is running, PID is listed.",
                            "If the app had been stopped, information about",
                            "signal/return is listed." } } },
+    // TODO:
     // { "status", command{ cmd_status, {}, {} } },
     // { "signal", command{ cmd_status, {}, {} } },
+    // { "signal", command{ cmd_status, {}, {} } },
+    // { "log",    command{ cmd_status, {}, {} } },
 };
 
 

@@ -47,7 +47,7 @@ int run(int argc, char** argv)
 
     if (COMMANDS.count(argv[1]) == 0)
     {
-        std::fprintf(stderr, "Usage: %s CMD [ARG]\n"
+        std::fprintf(stderr, "Invalid command.\nUsage: %s CMD [ARG]\n"
                              "\n"
                              "Try: %s help\n", argv[0], argv[0]);
         return 1;

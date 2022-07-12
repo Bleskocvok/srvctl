@@ -1,7 +1,7 @@
 
 // daemon
 #define _DEFAULT_SOURCE
-// sigaction, siginfo_t, strsignal
+// sigaction, siginfo_t
 #define _POSIX_C_SOURCE 200809L
 // ppoll
 #ifndef _GNU_SOURCE
@@ -12,7 +12,7 @@
 #include "commands.hpp" // commands
 #include "message.hpp"  // message
 #include "common.hpp"   // app, to_str
-#include "proc.hpp"     // proc
+#include "log.hpp"      // *log*
 #include "fd.hpp"       // fd
 
 // deps
@@ -20,29 +20,24 @@
 
 // posix
 #include <fcntl.h>      // fcntl
-#include <unistd.h>     // fcntl, daemon, write, read, close
+#include <unistd.h>     // fcntl, daemon
 #include <sys/socket.h> // bind, socket, connect, listen, accept
 #include <sys/types.h>  // bind, socket, connect, listen, accept
 #include <sys/un.h>     // sockaddr_un
 #include <poll.h>       // ppoll
 #include <signal.h>     // ppoll, sig_atomic_t, sigaction, sigemptyset,
                         //        sigaddset, sigprocmask, sigsuspend, SIG*
-#include <string.h>     // strsignal
 
 // c
 #include <cstdio>       // printf
-#include <cstring>      // strncpy, strerror, memset
+#include <cstring>      // strncpy, memset
 #include <cerrno>       // errno
 
 // cpp
 #include <fstream>      // ifstream
-#include <iostream>     // cerr
 #include <map>          // map
 #include <filesystem>   // fs::*
-#include <algorithm>    // min
 #include <array>        // array
-#include <utility>      // forward, declval
-#include <type_traits>  // is_same_v, decay_t
 
 
 using json = nlohmann::json;
@@ -123,43 +118,6 @@ std::map<std::string, app_t> parse(const fs::path& path)
 }
 
 
-template<typename Arg, typename ... Args>
-void log_err_rec(Arg&& arg, Args&& ... args)
-{
-    using T = std::decay_t<Arg>;
-    if constexpr (std::is_same_v<char,
-                                 std::decay_t<decltype(std::declval<T>()[0])>>)
-    {
-        // TODO: add option to use syslog instead
-        std::fprintf(stderr, "%s", arg);
-    }
-    else if constexpr (std::is_same_v<std::string, T>)
-    {
-        std::fprintf(stderr, "%s", arg.c_str());
-    }
-    else
-    {
-        using D = typename std::decay<decltype(std::declval<T>()[0])>::type;
-        std::declval<D>().get_type_bla_bla();
-    }
-
-    if constexpr (sizeof...(Args) != 0)
-        log_err_rec(std::forward<Args>(args)...);
-}
-
-
-template<typename ... Args>
-void log_err(Args&& ... args)
-{
-    log_err_rec("(srvd) ERROR: ");
-    log_err_rec(std::forward<Args>(args)...);
-    log_err_rec("\n");
-}
-
-
-void log_errno(int err) { log_err(std::strerror(err)); }
-
-
 int run(int argc, char** argv)
 {
     setup_paths(true);
@@ -175,10 +133,12 @@ int run(int argc, char** argv)
             return std::printf("usage: %s [--no-daemon]\n", argv[0]), 0;
     }
 
-    if (deamonize && daemon(0, 0) == -1)
-        return log_errno(errno), 1;
-
-    // deamon now
+    if (deamonize)
+    {
+        if (daemon(0, 0) == -1)
+            return log_errno(errno), 1;
+        log_output(syslog_tag{});
+    }
 
     setup_react_signals();
 
