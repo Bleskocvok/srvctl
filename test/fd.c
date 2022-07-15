@@ -31,7 +31,5 @@ int main()
     //     printf("read: %*s\n", r, buf);
 
     fprintf(stderr, "(fd) some error\n");
-
-    printf("(fd) exit\n");
     return 0;
 }
