@@ -2,10 +2,12 @@
 
 // headers
 #include "fd.hpp"       // fd_t
+#include "signames.hpp" // str_sig
 
 // cpp
 #include <string>       // string
 #include <variant>      // get_if
+#include <array>        // array
 
 
 namespace fs = std::filesystem;
@@ -156,21 +158,24 @@ message cmd_status(const message&, server_t&)
 
 message cmd_list  (const message&, server_t& server)
 {
-    auto str_exit = [](const auto& ex) -> std::string
+    auto str_exit = [](const auto& ex)
     {
         if (!ex)
-            return "-";
+            return std::array<char, 256>{ "-" };
+
+        std::array<char, 256> res = { 0 };
 
         if (const auto* e = std::get_if<e_exit>(&*ex))
         {
-            return "(exit " + std::to_string(e->ret) + ")";
+            std::snprintf(res.data(), res.size(), "exit %d", e->ret);
         }
         else if (const auto* s = std::get_if<e_sig>(&*ex))
         {
-            return "(sig " + std::to_string(s->sig) + ": "
-                   + ::strsignal(s->sig) + ")";
+            std::snprintf(res.data(), res.size(),
+                         "%s (%d): %s",
+                         str_sig(s->sig), s->sig, ::strsignal(s->sig));
         }
-        return {};
+        return res;
     };
 
     auto resp = message{ "ok" };
@@ -183,13 +188,13 @@ message cmd_list  (const message&, server_t& server)
         auto it = server.procs.find(key);
         if (it != server.procs.end())
         {
-            resp.add_line("%-20s │ %10d │ %20s", key.c_str(), it->second.pid,
-                                                 str_exit(app.exit).c_str());
+            resp.add_line("%-20s │ %10d │ %-20s", key.c_str(), it->second.pid,
+                                                 str_exit(app.exit).data());
         }
         else
         {
-            resp.add_line("%-20s │ %10s │ %20s", key.c_str(), "-",
-                                                 str_exit(app.exit).c_str());
+            resp.add_line("%-20s │ %10s │ %-20s", key.c_str(), "-",
+                                                 str_exit(app.exit).data());
         }
     }
     return resp;
