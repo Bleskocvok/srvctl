@@ -4,8 +4,8 @@ CC = $(CXX)
 INCLUDE = ./
 CXXFLAGS = -std=c++17 -Wall -Wextra -I$(INCLUDE)
 
-CON_SRC = src/srvctl.cpp src/commands.cpp
-DAE_SRC = src/daemon.cpp src/commands.cpp
+CON_SRC = src/srvctl.cpp src/commands.cpp src/signames.cpp
+DAE_SRC = src/daemon.cpp src/commands.cpp src/signames.cpp
 
 CON = srvctl
 DAE = srvd

@@ -36,7 +36,7 @@ extern const std::map<std::string, command> COMMANDS =
                            "it is first stopped as if by command ‹stop›." } } },
     { "list",   command{ cmd_list,
                          {},
-                         { "List each apps loaded from the confifuration file",
+                         { "List each apps loaded from the configuration file",
                            "If an instance is running, PID is listed.",
                            "If the app had been stopped, information about",
                            "signal/return is listed." } } },
