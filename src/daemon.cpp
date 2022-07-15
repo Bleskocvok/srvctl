@@ -118,6 +118,12 @@ std::map<std::string, app_t> parse(const fs::path& path)
 }
 
 
+void print_usage(const char* argv0)
+{
+    std::printf("usage: %s [--no-daemon | -nod]]\n", argv0);
+}
+
+
 int run(int argc, char** argv)
 {
     setup_paths(true);
@@ -127,10 +133,12 @@ int run(int argc, char** argv)
     bool deamonize = true;
     if (argc > 1)
     {
-        if (argv[1] == "--no-daemon"sv)
+        if (argv[1] == "--no-daemon"sv || argv[1] == "-nod"sv)
             deamonize = false;
         else if (argv[1] == "--help"sv)
-            return std::printf("usage: %s [--no-daemon]\n", argv[0]), 0;
+            return print_usage(argv[0]), 0;
+        else
+            return print_usage(argv[0]), 1;
     }
 
     if (deamonize)
@@ -155,8 +163,8 @@ int run(int argc, char** argv)
     server_t server;
     server.apps = parse(CONF_PATH);
 
-    fd_t sock = socket(AF_UNIX, SOCK_STREAM, 0);
-    if (!sock)
+    server.sock = socket(AF_UNIX, SOCK_STREAM, 0);
+    if (!server.sock)
         return log_errno(errno), 1;
 
     struct sockaddr_un addr;
@@ -165,16 +173,16 @@ int run(int argc, char** argv)
 
     fs::remove(SOCK_PATH);
 
-    if (bind(sock.fd, (struct sockaddr*) &addr, sizeof(addr)) == -1)
+    if (bind(server.sock.fd, (struct sockaddr*) &addr, sizeof(addr)) == -1)
         return log_errno(errno), 1;
 
-    if (listen(sock.fd, MAX_CLIENTS) == -1)
+    if (listen(server.sock.fd, MAX_CLIENTS) == -1)
         return log_errno(errno), 1;
 
     // // TODO: perhaps:
     // prctl(PR_SET_CHILD_SUBREAPER, ...);
 
-    struct pollfd fds = { sock.fd, POLLIN | POLLOUT, 0 };
+    struct pollfd fds = { server.sock.fd, POLLIN | POLLOUT, 0 };
 
     struct timespec delay;
     delay.tv_sec = 3;
@@ -182,7 +190,7 @@ int run(int argc, char** argv)
 
     message msg;
 
-    fcntl(sock.fd, F_SETFL, O_NONBLOCK);
+    fcntl(server.sock.fd, F_SETFL, O_NONBLOCK);
 
     while (true)
     {
@@ -198,7 +206,7 @@ int run(int argc, char** argv)
             server.reap_zombies();
         }
 
-        fd_t client = accept4(sock.fd, nullptr, nullptr, SOCK_CLOEXEC);
+        fd_t client = accept4(server.sock.fd, nullptr, nullptr, SOCK_CLOEXEC);
         if (!client)
         {
             int err = errno;

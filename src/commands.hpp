@@ -8,6 +8,7 @@
 // cpp
 #include <map>          // map
 #include <vector>       // vector
+#include <filesystem>   // fs::*
 
 
 using cmd_ptr = message (*) (const message&, server_t&);

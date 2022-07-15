@@ -3,15 +3,23 @@
 // kill
 #define _POSIX_C_SOURCE 200809L
 
+// header
+#include "log.hpp"          // *log*
+#include "fd.hpp"           // fd_t
+
 // posix
 #include <sys/wait.h>       // kill, waitpid
 #include <sys/types.h>      //       waitpid, fork
 #include <unistd.h>         //                fork, exec*
+#include <unistd.h>         // open, close, dup2
+#include <sys/types.h>      // open
+#include <fcntl.h>          // open
 #include <signal.h>         // kill
 #include <sys/prctl.h>      // prctl
 
 // c
 #include <cstdlib>          // exit
+#include <cerrno>           // errno
 
 // cpp
 #include <stdexcept>        // runtime_error
@@ -19,6 +27,7 @@
 #include <vector>           // vector
 #include <filesystem>       // fs::*
 #include <utility>          // exchange
+#include <map>              // map
 
 
 struct e_exit { int ret; };
@@ -29,7 +38,10 @@ struct proc_t
 {
     pid_t pid = -1;
 
-    proc_t(char* const argv[], const std::filesystem::path& cwd)
+    proc_t(char* const argv[],
+           const std::filesystem::path& cwd,
+           const std::map<int, std::filesystem::path>& redir = {},
+           const std::vector<int>& to_close = {})
     {
         pid = ::fork();
 
@@ -39,14 +51,24 @@ struct proc_t
         if (pid == 0)
         {
             if (::prctl(PR_SET_PDEATHSIG, SIGKILL) == -1)
-                // TODO: better log
-                std::perror("(srvd) ERROR");
+                log_errno(errno);
+
+            for (const auto& [fd, filename] : redir)
+            {
+                fd_t file = ::open(filename.c_str(),
+                                   O_WRONLY | O_CREAT | O_TRUNC, 0644);
+                file.dup2(fd).reset();
+            }
+
+            for (int fd : to_close)
+                // fd_t{ fd }.close();
+                ::close(fd);
 
             std::filesystem::current_path(cwd);
 
             ::execvp(argv[0], argv);
 
-            // TODO: error log
+            log_errno(errno);
             std::exit(1);
         }
     }

@@ -1,8 +1,14 @@
 #include "commands.hpp"
 
+// headers
+#include "fd.hpp"       // fd_t
+
 // cpp
 #include <string>       // string
 #include <variant>      // get_if
+
+
+namespace fs = std::filesystem;
 
 
 message cmd_start (const message&, server_t&);
@@ -34,9 +40,11 @@ extern const std::map<std::string, command> COMMANDS =
                            "If an instance is running, PID is listed.",
                            "If the app had been stopped, information about",
                            "signal/return is listed." } } },
+    // { "signal", command{ cmd_status,
+    //                      { "SIGNAL", "APP"},
+    //                      {} } },
     // TODO:
     // { "status", command{ cmd_status, {}, {} } },
-    // { "signal", command{ cmd_status, {}, {} } },
     // { "signal", command{ cmd_status, {}, {} } },
     // { "log",    command{ cmd_status, {}, {} } },
 };
@@ -71,7 +79,16 @@ message cmd_start(const message& msg, server_t& server)
 
     char* const* argv = it->second.start.get();
     const auto& dir = it->second.dir;
-    const auto& [nit, succ] = server.procs.try_emplace(arg, argv, dir);
+
+    auto redir = std::map<int, fs::path>
+    {
+        { fd_t::fileno(stdout), LOG_PATH / arg += ".stdout.log" },
+        { fd_t::fileno(stderr), LOG_PATH / arg += ".stderr.log" },
+    };
+
+    auto to_close = std::vector<int>{ };
+
+    const auto& [nit, succ] = server.procs.try_emplace(arg, argv, dir, redir);
     if (!succ)
         return message{ "error", "already running" };
 

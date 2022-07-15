@@ -1,15 +1,19 @@
 #pragma once
 
 // posix
-#include <unistd.h>     // read, write, close
+#include <unistd.h>     // read, write, close, dup, dup2
+#include <stdio.h>      // fileno
 
 // cpp
+#include <cstdio>       // FILE
 #include <utility>      // exchange
 
 
 struct fd_t
 {
     int fd = -1;
+
+    static int fileno(std::FILE* file) { return ::fileno(file); }
 
     fd_t(int file_desc)
         : fd(file_desc)
@@ -18,7 +22,7 @@ struct fd_t
     ~fd_t()
     {
         if (fd != -1)
-            ::close(fd);
+            close();
     }
 
     fd_t(const fd_t&) = delete;
@@ -32,6 +36,20 @@ struct fd_t
     {
         fd = std::exchange(other.fd, -1);
         return *this;
+    }
+
+    int close() { return ::close(std::exchange(fd, -1)); }
+
+    void reset() { fd = -1; }
+
+    fd_t dup() const
+    {
+        return fd_t{ ::dup(fd) };
+    }
+
+    fd_t dup2(int newfd) const
+    {
+        return fd_t{ ::dup2(fd, newfd) };
     }
 
     explicit operator bool() const { return fd != -1; }

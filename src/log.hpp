@@ -18,14 +18,14 @@ inline static bool USE_SYSLOG = false;
 struct syslog_tag {};
 struct stderr_tag {};
 
-void log_output(syslog_tag)
+inline void log_output(syslog_tag)
 {
     ::openlog("srvd", LOG_PID, LOG_USER);
     USE_SYSLOG = true;
 }
 
 
-void log_output(stderr_tag)
+inline void log_output(stderr_tag)
 {
     USE_SYSLOG = false;
 }

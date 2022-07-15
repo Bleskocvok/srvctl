@@ -34,6 +34,7 @@ inline const auto SOCK = std::filesystem::path{ ".socket" };
 
 inline auto CONF_PATH = std::filesystem::path{};
 inline auto SOCK_PATH = std::filesystem::path{};
+inline auto LOG_PATH  = std::filesystem::path{};
 
 
 inline void setup_paths(bool log = false)
@@ -45,8 +46,11 @@ inline void setup_paths(bool log = false)
         throw std::runtime_error("cannot obtain HOME");
 
     auto home = fs::path{ pw->pw_dir };
-    CONF_PATH = home / ".srvctl" / CONF;
-    SOCK_PATH = home / ".srvctl" / SOCK;
+
+    auto dir = home / ".srvctl";
+    CONF_PATH = dir / CONF;
+    SOCK_PATH = dir / SOCK;
+    LOG_PATH  = dir;
 
     if (!fs::is_regular_file(CONF_PATH))
         throw std::runtime_error("'" + CONF_PATH.string()
@@ -66,12 +70,14 @@ struct argv_t
 
     argv_t(std::string str) : data(std::move(str))
     {
-        data.reserve(1 + std::count(data.begin(), data.end(), ' '));
+        ptrs.reserve(2 + std::count(data.begin(), data.end(), ' '));
+
+        ptrs.push_back(&data[0]);
 
         for (size_t i = 0; i < data.size(); i++)
         {
             if (data[i] == ' ')
-            {                                   
+            {
                 data[i] = '\0';
                 ptrs.push_back(&data[i + 1]);   // +1 doesn't cause problems,
             }                                   // because std::string will
@@ -94,6 +100,7 @@ struct server_t
 {
     std::map<std::string, proc_t> procs;
     std::map<std::string, app_t> apps;
+    fd_t sock{ -1 };
 
     auto reap(decltype(procs)::iterator it)
     {
