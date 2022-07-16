@@ -44,7 +44,7 @@ extern const std::map<std::string, command> COMMANDS =
                            "signal/return is listed." } } },
     { "signal", command{ cmd_signal,
                          { "APP", "SIGNAL"},
-                         { "" } } },
+                         { "Send given signal to given running app." } } },
     // TODO:
     // { "status", command{ cmd_status, {}, {} } },
     // { "signal", command{ cmd_status, {}, {} } },
