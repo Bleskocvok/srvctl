@@ -1,10 +1,10 @@
 #!/bin/bash
 
-echo '(loop) starting'
+echo '(f) starting'
 
 for i in $(seq 10); do
     sleep 1
-    echo '.'
+    echo "(f) $i"
 done
 
-echo '(loop) exitting'
+echo '(f) exitting'

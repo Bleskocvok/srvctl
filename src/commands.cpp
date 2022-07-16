@@ -17,7 +17,7 @@ message cmd_start (const message&, server_t&);
 message cmd_stop  (const message&, server_t&);
 message cmd_update(const message&, server_t&);
 message cmd_list  (const message&, server_t&);
-message cmd_status(const message&, server_t&);
+message cmd_signal(const message&, server_t&);
 
 
 extern const std::map<std::string, command> COMMANDS =
@@ -42,9 +42,9 @@ extern const std::map<std::string, command> COMMANDS =
                            "If an instance is running, PID is listed.",
                            "If the app had been stopped, information about",
                            "signal/return is listed." } } },
-    // { "signal", command{ cmd_status,
-    //                      { "SIGNAL", "APP"},
-    //                      {} } },
+    { "signal", command{ cmd_signal,
+                         { "APP", "SIGNAL"},
+                         { "" } } },
     // TODO:
     // { "status", command{ cmd_status, {}, {} } },
     // { "signal", command{ cmd_status, {}, {} } },
@@ -150,12 +150,6 @@ message cmd_update(const message& msg, server_t& server)
 }
 
 
-message cmd_status(const message&, server_t&)
-{
-    return {};
-}
-
-
 message cmd_list  (const message&, server_t& server)
 {
     auto str_exit = [](const auto& ex)
@@ -198,4 +192,23 @@ message cmd_list  (const message&, server_t& server)
         }
     }
     return resp;
+}
+
+
+message cmd_signal(const message& msg, server_t& server)
+{
+    const auto& sig = msg.line(1);
+    const auto& arg = msg.line(0);
+
+    auto it = server.procs.find(arg);
+    if (it == server.procs.end())
+        return message{ "error", "'%s' not running", arg };
+
+    int s = int_sig(sig);
+    if (s == -1)
+        return message{ "error", "invalid signal '%s'", sig };
+
+    it->second.signal(s);
+
+    return { "ok" };
 }

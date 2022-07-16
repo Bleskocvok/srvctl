@@ -53,7 +53,10 @@ int run(int argc, char** argv)
         return 1;
     }
 
-    auto msg = message{ argv[1], argc > 2 ? argv[2] : nullptr};
+    auto msg = message{ argv[1] };
+
+    for (int i = 2; i < argc; i++)
+        msg.add_line(argv[i]);
 
     fd_t sock = socket(AF_UNIX, SOCK_STREAM, 0);
     if (!sock)
