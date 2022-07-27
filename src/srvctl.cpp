@@ -27,9 +27,9 @@
 namespace fs = std::filesystem;
 
 
-void log_err(int err)
+void log_err(const char* str, int err)
 {
-    std::fprintf(stderr, "ERROR: %s\n", std::strerror(err));
+    std::fprintf(stderr, "ERROR: %s: %s\n", str, std::strerror(err));
 }
 
 
@@ -60,22 +60,26 @@ int run(int argc, char** argv)
 
     fd_t sock = socket(AF_UNIX, SOCK_STREAM, 0);
     if (!sock)
-        return log_err(errno), 1;
+        return log_err("socket", errno), 1;
 
     struct sockaddr_un addr;
     addr.sun_family = AF_UNIX;
     std::strncpy(addr.sun_path, SOCK_PATH.c_str(), sizeof(addr.sun_path));
 
     if (connect(sock.fd, (struct sockaddr*) &addr, sizeof(addr)) == -1)
-        return log_err(errno),
-               printf("\nPerhaps the daemon is not running,\n"
-                      "try starting it with ‹srvd› first\n"), 1;
+    {
+        log_err("connect", errno);
+        std::fprintf(stderr,
+                     "\nPerhaps the daemon is not running,\n"
+                     "try starting it with ‹srvd› first\n");
+        return 1;
+    }
 
     if (auto err = msg.send(sock))
-        return log_err(*err), 1;
+        return log_err("send", *err), 1;
 
     if (auto err = msg.recv(sock))
-        return log_err(*err), 1;
+        return log_err("recv", *err), 1;
 
     std::cout << "[" << msg.arg << "]\n";
     for (const auto& line : msg.contents)
