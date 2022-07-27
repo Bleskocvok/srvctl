@@ -29,7 +29,7 @@ namespace fs = std::filesystem;
 
 void log_err(int err)
 {
-    std::fprintf(stderr, "(srvctl) ERROR: %s\n", std::strerror(err));
+    std::fprintf(stderr, "ERROR: %s\n", std::strerror(err));
 }
 
 
@@ -67,7 +67,9 @@ int run(int argc, char** argv)
     std::strncpy(addr.sun_path, SOCK_PATH.c_str(), sizeof(addr.sun_path));
 
     if (connect(sock.fd, (struct sockaddr*) &addr, sizeof(addr)) == -1)
-        return log_err(errno), 1;
+        return log_err(errno),
+               printf("\nPerhaps the daemon is not running,\n"
+                      "try starting it with ‹srvd› first\n"), 1;
 
     if (auto err = msg.send(sock))
         return log_err(*err), 1;
