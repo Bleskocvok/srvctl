@@ -52,6 +52,15 @@ extern const std::map<std::string, command> COMMANDS =
 };
 
 
+const char* CONF_FMT_EX = R"RAW_STRING(
+"APP_NAME": {
+    "dir": "/ABS/PATH/TO/DIR",
+    "start": "[CMD] /ABS/PATH/TO/EXECUTABLE",
+    "update": "UPDATE CMD"
+}
+)RAW_STRING";
+
+
 void print_help(const char* program)
 {
     std::printf("Usage: %s CMD [ARG]\n\n", program);
@@ -68,6 +77,12 @@ void print_help(const char* program)
             std::printf("    %s\n", line.c_str());
         std::printf("\n");
     }
+
+    std::printf("CONFIGURATION FORMAT\n\n");
+    std::printf("The configuration is located in ‹%s›.\n"
+                "It uses the ‹json› format. Each application entry should\n"
+                "look as following:\n"
+                "%s\n", "~/.srvctl", CONF_FMT_EX);
 }
 
 

@@ -19,6 +19,7 @@ all: $(CON) $(DAE)
 
 install: all
 	sudo cp ./$(CON) ./$(DAE) /usr/local/bin/
+	mkdir -p ~/.srvctl/
 
 
 $(CON): $(CON_OBJ)
