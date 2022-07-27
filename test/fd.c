@@ -8,7 +8,6 @@
 
 int main()
 {
-    printf("(fd) start\n");
     long max = sysconf(_SC_OPEN_MAX);
     for (int fd = 0; fd < max; fd++)
     {
@@ -29,7 +28,5 @@ int main()
     //     printf("read: err\n");
     // else if (r >= 0)
     //     printf("read: %*s\n", r, buf);
-
-    fprintf(stderr, "(fd) some error\n");
     return 0;
 }

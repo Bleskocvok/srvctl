@@ -88,9 +88,10 @@ message cmd_start(const message& msg, server_t& server)
         { fd_t::fileno(stderr), LOG_PATH / arg += ".stderr.log" },
     };
 
-    auto to_close = std::vector<int>{ };
+    auto to_close = std::vector<int>{ server.sock.fd };
 
-    const auto& [nit, succ] = server.procs.try_emplace(arg, argv, dir, redir);
+    const auto& [nit, succ] = server.procs.try_emplace(arg, argv, dir, redir,
+                                                       to_close);
     if (!succ)
         return message{ "error", "already running" };
 
