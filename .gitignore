@@ -1,5 +1,10 @@
 
-/.vscode/
+# executables
 /srvd
 /srvctl
+/test/fd
+
+# editor settings
+/.vscode/
+
 /.srvctl.*

@@ -41,7 +41,7 @@ inline void setup_paths(bool log = false)
 {
     namespace fs = std::filesystem;
 
-    struct passwd* pw = getpwuid(getuid());
+    struct passwd* pw = ::getpwuid(::getuid());
     if (!pw)
         throw std::runtime_error("cannot obtain HOME");
 

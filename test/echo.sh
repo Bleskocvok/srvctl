@@ -1,7 +1,9 @@
 #!/bin/bash
 
+echo "(echo) starting"
+
 pwd
-cat .srvctl.json
+cat ~/.srvctl/.apps.json
 sleep 4
 
 echo "(echo) exitting"

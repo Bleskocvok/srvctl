@@ -21,12 +21,5 @@ int main()
         else
             printf("fd %6d: error\n", fd);
     }
-
-    // char buf[] = { 0 };
-    // int r = read(3, buf, sizeof(buf) - 1);
-    // if (r == -1)
-    //     printf("read: err\n");
-    // else if (r >= 0)
-    //     printf("read: %*s\n", r, buf);
     return 0;
 }

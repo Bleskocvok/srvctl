@@ -1,0 +1,68 @@
+#!/bin/bash
+
+
+# run this from ‹srvctl› directory as
+#     test/run_test
+
+
+function fail()
+{
+    echo "fail: $@"
+    echo "$PREV" > "$CONFIG"
+    exit 1
+}
+
+
+function get_log()
+{
+    local res=$(cat ~/.srvctl/$1.stdout.log)
+    1>&2 echo "$1: $res"
+    echo "$res"
+}
+
+
+CONFIG=$(realpath ~/.srvctl/.apps.json)
+PREV=$(cat "$CONFIG" | cat)
+
+
+gcc -std=c99 -Wall -Wextra -o test/fd test/fd.c || fail "compilation"
+
+
+FD_PATH=$(realpath test/fd)
+
+
+echo """{
+    \"echo\": {
+        \"dir\": \".\",
+        \"start\": \"echo hello world\",
+        \"update\": \"echo update\"
+    },
+    \"fd\": {
+        \"dir\": \".\",
+        \"start\": \"$FD_PATH\",
+        \"update\": \"echo update\"
+    }
+}""" | tee "$CONFIG"
+
+echo "$CONFIG"
+
+
+./srvd &
+PID="$!"
+echo "pid=$PID"
+
+sleep 1
+
+./srvctl start echo
+sleep 1
+[ "$(get_log "echo")" = "hello world" ] || fail "hello world"
+
+./srvctl start fd
+sleep 1
+get_log "fd" | grep -q -E '[3-9][1-9]*'
+[ "$?" = "1" ] || fail "fd"
+
+kill -SIGINT "$PID" || echo "kill"
+
+
+echo "$PREV" > "$CONFIG"
