@@ -13,13 +13,20 @@ DAE = srvd
 CON_OBJ = $(patsubst src/%,obj/%, $(patsubst %.cpp,%.o,$(CON_SRC)))
 DAE_OBJ = $(patsubst src/%,obj/%, $(patsubst %.cpp,%.o,$(DAE_SRC)))
 
+BIN_DIR ?= /usr/local/bin
+CONFIG = ~/.srvctl/.apps.json
+
 
 all: $(CON) $(DAE)
 
 
 install: all
-	sudo cp ./$(CON) ./$(DAE) /usr/local/bin/
-	mkdir -p ~/.srvctl/
+	sudo install -D -m 755 ./$(CON) ./$(DAE) $(BIN_DIR)
+	install -D -m 644 $(CONFIG)
+
+uninstall:
+	sudo rm -f $(BIN_DIR)/$(DAE) $(BIN_DIR)/$(CON)
+	rm -rf ~/.srvctl/
 
 
 $(CON): $(CON_OBJ)
@@ -45,5 +52,5 @@ clean:
 distclean: clean
 	$(RM) $(CON) $(DAE)
 
-.PHONY: clean distclean install
+.PHONY: clean distclean install uninstall
 
