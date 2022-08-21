@@ -66,6 +66,7 @@ srvctl stop ‹APP›
     Stop a running instance of app of the given name.
     It must be running.
     The app is stopped by sending SIGKILL.
+
 srvctl update ‹APP› 
     Update a given app. If the app is currently running,
     it is first stopped as if by command ‹stop›.
